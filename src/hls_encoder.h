@@ -15,6 +15,63 @@
 
 #include "libav_include.h"
 
+
+struct frame
+{
+public:
+    frame()
+    {
+        m_frame = av_frame_alloc();
+        if( !m_frame )
+        {
+            throw std::runtime_error("failed to allocated memory for AVFrame");
+        }
+    }
+    ~frame()
+    {
+        if( m_frame ) {
+            av_frame_free( &m_frame );
+            m_frame = nullptr;
+        }
+    }
+
+    AVFrame* get() const
+    {
+        return m_frame;
+    }
+
+private:
+    AVFrame* m_frame;
+};
+
+struct packet
+{
+public:
+    packet()
+    {
+        m_packet = av_packet_alloc();
+        if( !m_packet )
+        {
+            throw std::runtime_error("failed to allocated memory for AVPacket");
+        }
+    }
+    ~packet()
+    {
+        if( m_packet ) {
+            av_packet_free( &m_packet );
+            m_packet = nullptr;
+        }
+    }
+
+    AVPacket* get() const
+    {
+        return m_packet;
+    }
+
+private:
+    AVPacket* m_packet;
+};
+
 struct format_context final
 {
 public:
@@ -515,27 +572,27 @@ struct video_scaler
         return m_scaler;
     }
 
-    void scale( const AVFrame* input_frame, AVFrame* scaled_frame ) const
+    void scale( const std::unique_ptr< frame >& input_frame, const std::unique_ptr< frame >& scaled_frame ) const
     {
-        scaled_frame->format = m_scaling_options.target_pixel_format;
-        scaled_frame->width  = m_scaling_options.target_width;
-        scaled_frame->height = m_scaling_options.target_height;
+        scaled_frame->get()->format = m_scaling_options.target_pixel_format;
+        scaled_frame->get()->width  = m_scaling_options.target_width;
+        scaled_frame->get()->height = m_scaling_options.target_height;
 
         av_image_alloc(
-                scaled_frame->data,
-                scaled_frame->linesize,
-                scaled_frame->width,
-                scaled_frame->height,
+                scaled_frame->get()->data,
+                scaled_frame->get()->linesize,
+                scaled_frame->get()->width,
+                scaled_frame->get()->height,
                 m_scaling_options.target_pixel_format,
                 16);
 
         sws_scale( m_scaler,
-                   (const uint8_t * const*) input_frame->data, input_frame->linesize,
+                   (const uint8_t * const*) input_frame->get()->data, input_frame->get()->linesize,
                    0, m_scaling_options.source_height,
-                   scaled_frame->data, scaled_frame->linesize);
+                   scaled_frame->get()->data, scaled_frame->get()->linesize);
 
-        scaled_frame->quality = input_frame->quality;
-        scaled_frame->pts = input_frame->pts;
+        scaled_frame->get()->quality = input_frame->get()->quality;
+        scaled_frame->get()->pts = input_frame->get()->pts;
     }
 
 private:
@@ -902,61 +959,6 @@ private:
 };
 
 
-struct frame
-{
-public:
-    frame()
-    {
-        m_frame = av_frame_alloc();
-        if( !m_frame )
-        {
-            throw std::runtime_error("failed to allocated memory for AVFrame");
-        }
-    }
-    ~frame()
-    {
-        if( m_frame ) {
-            av_frame_free( &m_frame );
-            m_frame = nullptr;
-        }
-    }
-
-    AVFrame* get() const
-    {
-        return m_frame;
-    }
-
-private:
-    AVFrame* m_frame;
-};
-
-struct packet
-{
-public:
-    packet()
-    {
-        m_packet = av_packet_alloc();
-        if( !m_packet )
-        {
-            throw std::runtime_error("failed to allocated memory for AVPacket");
-        }
-    }
-    ~packet()
-    {
-        if( m_packet ) {
-            av_packet_free( &m_packet );
-            m_packet = nullptr;
-        }
-    }
-
-    AVPacket* get() const
-    {
-        return m_packet;
-    }
-
-private:
-    AVPacket* m_packet;
-};
 
 struct hls_encoder {
 public:
@@ -1133,9 +1135,9 @@ public:
             if (response >= 0) {
                 for( hls_stream_encoder::stream_index _idx = 0; _idx < _encoder->get_streams_count(); ++_idx )
                 {
-                    auto _scaling_frame = _scaling_frames.at( _idx )->get();
-                    m_hls_stream_context->get_video_scaler_by_index( _idx )->scale( input_frame->get(), _scaling_frame );
-                    encode_video( _encoder->get_video_stream( _idx ), _scaling_frames.at( _idx ), stream_index + _idx );
+                    const auto& _scaling_frame = _scaling_frames.at( _idx );
+                    m_hls_stream_context->get_video_scaler_by_index( _idx )->scale( input_frame, _scaling_frame );
+                    encode_video( _encoder->get_video_stream( _idx ), _scaling_frame, stream_index + _idx );
                 }
             }
 
