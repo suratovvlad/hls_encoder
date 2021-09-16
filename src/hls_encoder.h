@@ -337,6 +337,14 @@ struct scaling_options
     AVPixelFormat source_pixel_format = AV_PIX_FMT_YUV420P;
     AVPixelFormat target_pixel_format = AV_PIX_FMT_YUV420P;
     int64_t bit_rate = 0;
+
+    scaling_options() =default;
+    scaling_options( const scaling_options& ) =default;
+    scaling_options( scaling_options&& )= default;
+
+    scaling_options& operator=( const scaling_options& ) =default;
+    scaling_options& operator=( scaling_options&& )= default;
+    ~scaling_options() = default;
 };
 
 struct output_stream : public stream

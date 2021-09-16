@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 #include "hls_encoder.h"
 
@@ -372,56 +373,126 @@ int to_hls( int argc, char *argv[] )
 struct hls_stream_encoder: public coder
 {
 public:
-    hls_stream_encoder(  const std::unique_ptr<output_stream_info>& _output_stream,
-                         const AVRational& _input_framerate,
-                         const AVRational& _input_samplerate,
-                         const scaling_options& _scaling_options_1,
-                         const scaling_options& _scaling_options_2,
-                         const scaling_options& _scaling_options_3 )
-    {
-        m_video_stream_1 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_1 );
-        m_video_stream_2 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_2 );
-        m_video_stream_3 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_3 );
+//    hls_stream_encoder(  const std::unique_ptr<output_stream_info>& _output_stream,
+//                         const AVRational& _input_framerate,
+//                         const AVRational& _input_samplerate,
+//                         const scaling_options& _scaling_options_1,
+//                         const scaling_options& _scaling_options_2,
+//                         const scaling_options& _scaling_options_3 )
+//    {
+//        m_video_streams.insert( { 0, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_1 ) } );
+//        m_video_streams.insert( { 1, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_2 ) } );
+//        m_video_streams.insert( { 2, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_3 ) } );
+//
+//        m_audio_streams.insert( { 0, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_1 ) } );
+//        m_audio_streams.insert( { 1, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_2 ) } );
+//        m_audio_streams.insert( { 2, std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_3 ) } );
+//
+//        m_streams_count = 3;
+//    }
 
-        m_audio_stream_1 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_1 );
-        m_audio_stream_2 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_2 );
-        m_audio_stream_3 = std::make_unique< output_stream >( _output_stream->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_3 );
+    hls_stream_encoder( const std::unique_ptr< output_stream_info> & _output_stream_info,
+                        const AVRational& _input_framerate,
+                        const AVRational& _input_samplerate,
+                        const std::vector< scaling_options >& _scaling_options )
+    {
+        for( const auto& _scaling_option : _scaling_options )
+        {
+            m_video_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_option ) );
+        }
+
+        for( const auto& _scaling_option : _scaling_options )
+        {
+            m_audio_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_option ) );
+        }
+
+        m_streams_count = _scaling_options.size();
+//        m_video_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_1 ) );
+//        m_video_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_2 ) );
+//        m_video_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::video, _input_framerate, _scaling_options_3 ) );
+//        m_audio_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_1 ) );
+//        m_audio_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_2 ) );
+//        m_audio_streams.emplace_back( std::make_unique< output_stream >( _output_stream_info->get_format_context(), stream::stream_type::audio, _input_samplerate, _scaling_options_3 ) );
+//        m_streams_count = 3;
     }
 
-    const std::unique_ptr< output_stream >& get_videostream_1() const
+//    const std::unique_ptr< output_stream >& get_videostream_1() const
+//    {
+//        return m_video_stream_1;
+//    }
+//    const std::unique_ptr< output_stream >& get_videostream_2() const
+//    {
+//        return m_video_stream_2;
+//    }
+//    const std::unique_ptr< output_stream >& get_videostream_3() const
+//    {
+//        return m_video_stream_3;
+//    }
+//
+//    const std::unique_ptr< output_stream >& get_audiostream_1() const
+//    {
+//        return m_audio_stream_1;
+//    }
+//    const std::unique_ptr< output_stream >& get_audiostream_2() const
+//    {
+//        return m_audio_stream_2;
+//    }
+//    const std::unique_ptr< output_stream >& get_audiostream_3() const
+//    {
+//        return m_audio_stream_3;
+//    }
+
+    using stream_index = int;
+    using stream_ptr = std::unique_ptr< output_stream >;
+    using streams_map = std::vector< stream_ptr >;
+
+    enum class stream_type
     {
-        return m_video_stream_1;
-    }
-    const std::unique_ptr< output_stream >& get_videostream_2() const
+        video,
+        audio
+    };
+
+    template< stream_type TStreamType >
+    const stream_ptr& get_stream_by_index( stream_index idx ) const
     {
-        return m_video_stream_2;
-    }
-    const std::unique_ptr< output_stream >& get_videostream_3() const
-    {
-        return m_video_stream_3;
+        if constexpr( TStreamType == stream_type::video )
+        {
+            return m_video_streams.at( idx );
+        }
+        else
+        {
+            return m_audio_streams.at( idx );
+        }
     }
 
-    const std::unique_ptr< output_stream >& get_audiostream_1() const
+    const stream_ptr& get_video_stream( stream_index idx ) const
     {
-        return m_audio_stream_1;
+        return get_stream_by_index< stream_type::video >( idx );
     }
-    const std::unique_ptr< output_stream >& get_audiostream_2() const
+
+    const stream_ptr& get_audio_stream( stream_index idx ) const
     {
-        return m_audio_stream_2;
+        return get_stream_by_index< stream_type::audio >( idx );
     }
-    const std::unique_ptr< output_stream >& get_audiostream_3() const
+
+    stream_index get_streams_count() const
     {
-        return m_audio_stream_3;
+        return m_streams_count;
     }
 
 private:
-    std::unique_ptr< output_stream > m_video_stream_1;
-    std::unique_ptr< output_stream > m_video_stream_2;
-    std::unique_ptr< output_stream > m_video_stream_3;
+    stream_index m_streams_count;
+    streams_map m_video_streams;
+    streams_map m_audio_streams;
 
-    std::unique_ptr< output_stream > m_audio_stream_1;
-    std::unique_ptr< output_stream > m_audio_stream_2;
-    std::unique_ptr< output_stream > m_audio_stream_3;
+
+//    std::unique_ptr< output_stream > m_video_stream_1;
+//    std::unique_ptr< output_stream > m_video_stream_2;
+//    std::unique_ptr< output_stream > m_video_stream_3;
+//
+//    std::unique_ptr< output_stream > m_audio_stream_1;
+//    std::unique_ptr< output_stream > m_audio_stream_2;
+//    std::unique_ptr< output_stream > m_audio_stream_3;
 };
 
 
@@ -431,17 +502,14 @@ public:
     hls_stream_context( const std::string& output_path,
                         const AVRational& _input_framerate,
                         const AVRational& _input_samplerate,
-                        const scaling_options& _scaling_options_1,
-                        const scaling_options& _scaling_options_2,
-                        const scaling_options& _scaling_options_3 )
-            : m_scaling_options_1( _scaling_options_1 )
-            , m_scaling_options_2( _scaling_options_2 )
-            , m_scaling_options_3( _scaling_options_3 )
+                        const std::vector< scaling_options > _scaling_options )
+            : m_scaling_options( _scaling_options )
             , m_output_path( output_path )
     {
-        m_scaler_1 = std::make_unique< video_scaler >( m_scaling_options_1 );
-        m_scaler_2 = std::make_unique< video_scaler >( m_scaling_options_2 );
-        m_scaler_3 = std::make_unique< video_scaler >( m_scaling_options_3 );
+        for( const auto& _scaling_option : m_scaling_options )
+        {
+            m_scalers.emplace_back( std::make_unique< video_scaler >( _scaling_option ) );
+        }
 
 //        m_filename_prefix = std::to_string( m_scaling_options.target_height );
         m_filename_pattern =  "v%v/fileSequence%d.ts";
@@ -451,9 +519,13 @@ public:
         std::filesystem::path path(m_output_path);
         m_absolute_path = path / m_filename_playlist;
 
+//        std::vector< scaling_options > _scaling_options;
+//        _scaling_options.push_back( _scaling_options_1 );
+//        _scaling_options.push_back( _scaling_options_2 );
+//        _scaling_options.push_back( _scaling_options_3 );
 
         m_stream_info = std::make_unique< output_stream_info >( m_absolute_path );
-        m_encoder = std::make_unique< hls_stream_encoder >( m_stream_info, _input_framerate, _input_samplerate, _scaling_options_1, _scaling_options_2, _scaling_options_3 );
+        m_encoder = std::make_unique< hls_stream_encoder >( m_stream_info, _input_framerate, _input_samplerate, _scaling_options );
 
         auto _av_output_format_context =  m_stream_info->get_format_context().get();
 
@@ -488,7 +560,15 @@ public:
         av_dict_set(&headerOptions, "hls_time", "6", 0);
         av_dict_set(&headerOptions, "hls_segment_filename", m_filename_pattern.c_str(), 0);
         av_dict_set(&headerOptions, "master_pl_name", m_filename_master_playlist.c_str(), 0);
-        av_dict_set(&headerOptions, "var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2", 0);
+
+        std::stringstream _streams_mapping;
+        for( int i = 0; i < m_scaling_options.size(); ++i )
+        {
+            _streams_mapping << "v:" << i << ",a:" << i << " ";
+        }
+
+//        av_dict_set(&headerOptions, "var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2", 0);
+        av_dict_set(&headerOptions, "var_stream_map", _streams_mapping.str().c_str(), 0);
 
         auto _av_output_format_context =  m_stream_info->get_format_context().get();
 
@@ -514,34 +594,45 @@ public:
         return m_stream_info;
     }
 
-    const std::unique_ptr< video_scaler >& get_scaler_1() const
+//    const std::unique_ptr< video_scaler >& get_scaler_1() const
+//    {
+//        return m_scaler_1;
+//    }
+//    const std::unique_ptr< video_scaler >& get_scaler_2() const
+//    {
+//        return m_scaler_2;
+//    }
+//    const std::unique_ptr< video_scaler >& get_scaler_3() const
+//    {
+//        return m_scaler_3;
+//    }
+
+    using video_scaler_ptr = std::unique_ptr< video_scaler >;
+    using video_scalers = std::vector< std::unique_ptr< video_scaler > >;
+
+    const video_scaler_ptr& get_video_scaler_by_index( hls_stream_encoder::stream_index idx ) const
     {
-        return m_scaler_1;
-    }
-    const std::unique_ptr< video_scaler >& get_scaler_2() const
-    {
-        return m_scaler_2;
-    }
-    const std::unique_ptr< video_scaler >& get_scaler_3() const
-    {
-        return m_scaler_3;
+        return m_scalers.at( idx );
     }
 
 private:
     std::unique_ptr< output_stream_info > m_stream_info;
     std::unique_ptr< hls_stream_encoder > m_encoder;
-    scaling_options m_scaling_options_1;
-    scaling_options m_scaling_options_2;
-    scaling_options m_scaling_options_3;
+//    scaling_options m_scaling_options_1;
+//    scaling_options m_scaling_options_2;
+//    scaling_options m_scaling_options_3;
     std::string m_filename_prefix;
     std::string m_filename_pattern;
     std::string m_filename_playlist;
     std::string m_filename_master_playlist;
     std::string m_output_path;
     std::string m_absolute_path;
-    std::unique_ptr< video_scaler > m_scaler_1;
-    std::unique_ptr< video_scaler > m_scaler_2;
-    std::unique_ptr< video_scaler > m_scaler_3;
+//    std::unique_ptr< video_scaler > m_scaler_1;
+//    std::unique_ptr< video_scaler > m_scaler_2;
+//    std::unique_ptr< video_scaler > m_scaler_3;
+
+    std::vector< scaling_options > m_scaling_options;
+    video_scalers m_scalers;
 };
 
 int encode_video_hls(const input_stream_context& _decoder_context, const std::unique_ptr< output_stream>& _video_stream, const std::unique_ptr< output_stream_info >& _stream_info, AVFrame *input_frame, int _stream_index) {
@@ -589,13 +680,13 @@ int transcode_video_hls(const input_stream_context& _decoder_context,
                     const hls_stream_context& _encoder_context,
                     AVPacket *input_packet,
                     AVFrame* input_frame,
-                    AVFrame* scaled_frame_1,
-                    AVFrame* scaled_frame_2,
-                    AVFrame* scaled_frame_3
-)
+                    const std::vector< std::unique_ptr< frame > >& _scaling_frames )
 {
     const auto& _decoder = _decoder_context.get_decoder();
     auto _decoder_video_codec_context = _decoder->get_video_stream()->get_av_codec_context();
+
+
+    const auto& _encoder = _encoder_context.get_encoder();
 
     int response = avcodec_send_packet(_decoder_video_codec_context, input_packet);
     if (response < 0){
@@ -613,20 +704,32 @@ int transcode_video_hls(const input_stream_context& _decoder_context,
         }
 
 
-        int stream_index = _decoder->get_video_stream()->get_stream_index();
+        const int stream_index = _decoder->get_video_stream()->get_stream_index();
         if (response >= 0) {
+
+//            std::vector< AVFrame* > _scaled_frames;
+//            _scaled_frames.push_back( scaled_frame_1 );
+//            _scaled_frames.push_back( scaled_frame_2 );
+//            _scaled_frames.push_back( scaled_frame_3 );
+            for( hls_stream_encoder::stream_index _idx = 0; _idx < _encoder->get_streams_count(); ++_idx )
             {
-                _encoder_context.get_scaler_1()->scale(input_frame, scaled_frame_1);
-                encode_video_hls(_decoder_context, _encoder_context.get_encoder()->get_videostream_1(), _encoder_context.get_stream_info(), scaled_frame_1, stream_index);
+                auto _scaling_frame = _scaling_frames.at( _idx )->get();
+                _encoder_context.get_video_scaler_by_index( _idx )->scale( input_frame, _scaling_frame );
+                encode_video_hls(_decoder_context, _encoder->get_video_stream( _idx ), _encoder_context.get_stream_info(),_scaling_frame, stream_index + _idx );
             }
-            {
-                _encoder_context.get_scaler_2()->scale(input_frame, scaled_frame_2);
-                encode_video_hls(_decoder_context,  _encoder_context.get_encoder()->get_videostream_2(), _encoder_context.get_stream_info(), scaled_frame_2, stream_index + 1);
-            }
-            {
-                _encoder_context.get_scaler_3()->scale(input_frame, scaled_frame_3);
-                encode_video_hls(_decoder_context,  _encoder_context.get_encoder()->get_videostream_3(), _encoder_context.get_stream_info(), scaled_frame_3, stream_index + 2);
-            }
+
+//            {
+//                _encoder_context.get_video_scaler_by_index( 0 )->scale(input_frame, scaled_frame_1);
+//                encode_video_hls(_decoder_context, _encoder->get_video_stream( 0 ), _encoder_context.get_stream_info(), scaled_frame_1, stream_index);
+//            }
+//            {
+//                _encoder_context.get_video_scaler_by_index( 1 )->scale(input_frame, scaled_frame_2);
+//                encode_video_hls(_decoder_context,  _encoder->get_video_stream( 1 ), _encoder_context.get_stream_info(), scaled_frame_2, stream_index + 1);
+//            }
+//            {
+//                _encoder_context.get_video_scaler_by_index( 2 )->scale(input_frame, scaled_frame_3);
+//                encode_video_hls(_decoder_context,  _encoder->get_video_stream( 2 ), _encoder_context.get_stream_info(), scaled_frame_3, stream_index + 2);
+//            }
         }
 
         av_frame_unref(input_frame);
@@ -677,6 +780,8 @@ int transcode_audio_hls(const input_stream_context& _decoder_context,
     const auto& _decoder = _decoder_context.get_decoder();
     auto _decoder_audio_codec_context = _decoder->get_audio_stream()->get_av_codec_context();
 
+    const auto& _encoder = _encoder_context.get_encoder();
+
     int response = avcodec_send_packet( _decoder_audio_codec_context, input_packet);
     if (response < 0) {
         throw std::runtime_error("Error while sending packet to decoder: [" + helpers::error2string(response) + "]");
@@ -692,11 +797,16 @@ int transcode_audio_hls(const input_stream_context& _decoder_context,
             return response;
         }
 
-        int _stream_index = _decoder->get_audio_stream()->get_stream_index();
+        const int _stream_index = _encoder->get_streams_count() ;
         if (response >= 0) {
-            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_1(), _encoder_context.get_stream_info(), input_frame, _stream_index + 2);
-            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_2(), _encoder_context.get_stream_info(), input_frame, _stream_index + 3);
-            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_3(), _encoder_context.get_stream_info(), input_frame, _stream_index + 4);
+            for( hls_stream_encoder::stream_index _idx = 0; _idx < _encoder->get_streams_count(); ++_idx )
+            {
+                encode_audio_hls(_decoder_context, _encoder->get_audio_stream( _idx ), _encoder_context.get_stream_info(), input_frame, _stream_index + _idx);
+            }
+
+//            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_1(), _encoder_context.get_stream_info(), input_frame, _stream_index + 2);
+//            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_2(), _encoder_context.get_stream_info(), input_frame, _stream_index + 3);
+//            encode_audio_hls(_decoder_context, _encoder_context.get_encoder()->get_audiostream_3(), _encoder_context.get_stream_info(), input_frame, _stream_index + 4);
         }
         av_frame_unref(input_frame);
     }
@@ -721,8 +831,12 @@ int to_hls2( int argc, char *argv[] )
         scaling_options _scale_1 = { 1920, 1080, 1280, 720, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 2 * 1000 * 1000 };
         scaling_options _scale_2 = { 1920, 1080, 840, 480, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 1 * 1000 * 1000 };
         scaling_options _scale_3 = { 1920, 1080, 420, 240, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 500 * 1000 };
+        scaling_options _scale_4 = { 1920, 1080, 1920, 1080, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 10 * 1000 * 1000 };
 
-        hls_stream_context _hls_stream_context( args[2], input_framerate, input_samplerate, _scale_1, _scale_2, _scale_3 );
+        const auto _scalings = { _scale_1, _scale_2, _scale_3, _scale_4 };
+
+
+        hls_stream_context _hls_stream_context( args[2], input_framerate, input_samplerate, _scalings );
 
         _hls_stream_context.write_header();
 
@@ -734,9 +848,15 @@ int to_hls2( int argc, char *argv[] )
         const auto& _format_context_1 = _input_stream_context_1.get_stream_info()->get_format_context();
         const auto& _format_context_2 = _input_stream_context_2.get_stream_info()->get_format_context();
 
-        frame scaled_frame_1;
-        frame scaled_frame_2;
-        frame scaled_frame_3;
+        std::vector< std::unique_ptr< frame > > _scaling_frames;
+        _scaling_frames.reserve( _scalings.size() );
+        for( int i = 0; i < _scalings.size(); ++i )
+        {
+            _scaling_frames.emplace_back( std::make_unique< frame >() );
+        }
+//        frame scaled_frame_1;
+//        frame scaled_frame_2;
+//        frame scaled_frame_3;
 
         bool no_video = false;
         bool no_audio = false;
@@ -752,9 +872,7 @@ int to_hls2( int argc, char *argv[] )
                                         _hls_stream_context,
                                     video_input_packet.get(),
                                     video_input_frame.get(),
-                                    scaled_frame_1.get(),
-                                    scaled_frame_2.get(),
-                                    scaled_frame_3.get() );
+                                    _scaling_frames );
                 }
             }
             else
