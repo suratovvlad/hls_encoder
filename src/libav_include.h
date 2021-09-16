@@ -17,4 +17,6 @@ extern "C"
 
 #include "helpers.h"
 
+#include <stdexcept>
+
 #endif //HLS_ENCODER_LIBAV_INCLUDE_H
