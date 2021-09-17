@@ -38,11 +38,12 @@ public:
             m_scalers.emplace_back( std::make_unique< video_scaler >( _scaling_option ) );
         }
 
-        m_filename_pattern =  filenames.segment_name;                   // "v%v/fileSequence%d.ts";
+        std::filesystem::path path(m_output_path);
+
+        m_filename_pattern = path / filenames.segment_name;                   // "v%v/fileSequence%d.ts";
         m_filename_playlist = filenames.media_playlist_name;            // "v%v/prog_index.m3u8";
         m_filename_master_playlist = filenames.master_playlist_name;    // "master.m3u8";
 
-        std::filesystem::path path(m_output_path);
         m_absolute_path = path / m_filename_playlist;
 
         m_stream_info = std::make_unique< output_stream_info >( m_absolute_path );
