@@ -15,11 +15,18 @@
 #include <filesystem>
 #include <vector>
 
+struct hls_output_filenames
+{
+    std::string segment_name;
+    std::string media_playlist_name;
+    std::string master_playlist_name;
+};
 
 struct hls_stream_context
 {
 public:
     hls_stream_context( const std::string& output_path,
+                        const hls_output_filenames& filenames,
                         const AVRational& _input_framerate,
                         const AVRational& _input_samplerate,
                         const std::vector< scaling_options > _scaling_options )
@@ -31,18 +38,12 @@ public:
             m_scalers.emplace_back( std::make_unique< video_scaler >( _scaling_option ) );
         }
 
-//        m_filename_prefix = std::to_string( m_scaling_options.target_height );
-        m_filename_pattern =  "v%v/fileSequence%d.ts";
-        m_filename_playlist = "v%v/prog_index.m3u8";
-        m_filename_master_playlist = "master.m3u8";
+        m_filename_pattern =  filenames.segment_name;                   // "v%v/fileSequence%d.ts";
+        m_filename_playlist = filenames.media_playlist_name;            // "v%v/prog_index.m3u8";
+        m_filename_master_playlist = filenames.master_playlist_name;    // "master.m3u8";
 
         std::filesystem::path path(m_output_path);
         m_absolute_path = path / m_filename_playlist;
-
-//        std::vector< scaling_options > _scaling_options;
-//        _scaling_options.push_back( _scaling_options_1 );
-//        _scaling_options.push_back( _scaling_options_2 );
-//        _scaling_options.push_back( _scaling_options_3 );
 
         m_stream_info = std::make_unique< output_stream_info >( m_absolute_path );
         m_encoder = std::make_unique< hls_stream_encoder >( m_stream_info, _input_framerate, _input_samplerate, _scaling_options );
@@ -62,14 +63,7 @@ public:
     void write_header()
     {
         AVDictionary* headerOptions(0);
-//        av_dict_set(&headerOptions, "segment_format", "mpegts", 0);
-//        av_dict_set(&headerOptions, "segment_list_type", "m3u8", 0);
-//        av_dict_set(&headerOptions, "segment_list", args[2].c_str(), 0);
-//        av_dict_set_int(&headerOptions, "segment_list_size", 0, 0);
-//        av_dict_set(&headerOptions, "segment_time_delta", "1.00", 0);
-//        av_dict_set(&headerOptions, "segment_time", "10", 0);
-//        av_dict_set_int(&headerOptions, "reference_stream", _input_stream_context_1.get_decoder()->get_video_stream()->get_stream_index(), 0);
-//        av_dict_set(&headerOptions, "segment_list_flags", "cache+live", 0);
+
         av_dict_set(&headerOptions, "hls_segment_type", "mpegts", 0);
         av_dict_set(&headerOptions, "hls_playlist_type", "vod", 0);
         av_dict_set_int(&headerOptions, "hls_list_size", 0, 0);
@@ -87,7 +81,7 @@ public:
             _streams_mapping << "v:" << i << ",a:" << i << " ";
         }
 
-//        av_dict_set(&headerOptions, "var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2", 0);
+        // Meaning: av_dict_set(&headerOptions, "var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2", 0);
         av_dict_set(&headerOptions, "var_stream_map", _streams_mapping.str().c_str(), 0);
 
         auto _av_output_format_context =  m_stream_info->get_format_context().get();
@@ -114,19 +108,6 @@ public:
         return m_stream_info;
     }
 
-//    const std::unique_ptr< video_scaler >& get_scaler_1() const
-//    {
-//        return m_scaler_1;
-//    }
-//    const std::unique_ptr< video_scaler >& get_scaler_2() const
-//    {
-//        return m_scaler_2;
-//    }
-//    const std::unique_ptr< video_scaler >& get_scaler_3() const
-//    {
-//        return m_scaler_3;
-//    }
-
     using video_scaler_ptr = std::unique_ptr< video_scaler >;
     using video_scalers = std::vector< std::unique_ptr< video_scaler > >;
 
@@ -138,18 +119,12 @@ public:
 private:
     std::unique_ptr< output_stream_info > m_stream_info;
     std::unique_ptr< hls_stream_encoder > m_encoder;
-//    scaling_options m_scaling_options_1;
-//    scaling_options m_scaling_options_2;
-//    scaling_options m_scaling_options_3;
-    std::string m_filename_prefix;
+
     std::string m_filename_pattern;
     std::string m_filename_playlist;
     std::string m_filename_master_playlist;
     std::string m_output_path;
     std::string m_absolute_path;
-//    std::unique_ptr< video_scaler > m_scaler_1;
-//    std::unique_ptr< video_scaler > m_scaler_2;
-//    std::unique_ptr< video_scaler > m_scaler_3;
 
     std::vector< scaling_options > m_scaling_options;
     video_scalers m_scalers;

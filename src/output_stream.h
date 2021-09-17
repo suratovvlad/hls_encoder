@@ -75,7 +75,8 @@ public:
                 m_codec_context->pix_fmt = _scaling_options.target_pixel_format;
             }
 
-            m_codec_context->bit_rate = _scaling_options.target_width * _scaling_options.target_height * _input_framerate.num * 0.1;
+//            m_codec_context->bit_rate = _scaling_options.target_width * _scaling_options.target_height * _input_framerate.num * 0.1;
+            m_codec_context->bit_rate = _scaling_options.bit_rate;
 
 //            m_codec_context->bit_rate = _scaling_options.bit_rate;
 //            m_codec_context->rc_max_rate = 2 * m_codec_context->bit_rate;
@@ -83,8 +84,8 @@ public:
 //            m_codec_context->rc_buffer_size = 4 * m_codec_context->bit_rate;
 
             m_codec_context->time_base = av_inv_q( _input_framerate );
-            m_codec_context->gop_size = 60;
-            m_codec_context->max_b_frames = 1;
+            m_codec_context->gop_size = _scaling_options.gop_size;
+            m_codec_context->max_b_frames = _scaling_options.max_b_frames;
             m_stream->time_base = m_codec_context->time_base;
 
 

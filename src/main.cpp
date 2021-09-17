@@ -694,12 +694,42 @@ int main( int argc, char *argv[] )
         const auto _video_src = _args.at( 0 );
         const auto _audio_src = _args.at( 1 );
         const auto _output_dir = _args.at( 2 );
-        auto _hls_encoder = std::make_unique< hls_encoder >( _video_src, _audio_src, _output_dir );
+
+        hls_output_filenames _output_filenames = {
+                "media_stream_%v/segment_%03d.ts",
+                "media_stream_%v/media.m3u8",
+                "master.m3u8"
+        };
+
+        auto _hls_encoder = std::make_unique< hls_encoder >( _video_src, _audio_src, _output_dir, _output_filenames );
+
+        constexpr auto AUDIO_BITRATE = 128000;
 
         // TODO: fill this with arguments to application
-        scaling_options _scale_1 = { 1920, 1080, 1280, 720, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 2 * 1000 * 1000 };
-        scaling_options _scale_2 = { 1920, 1080, 840, 480, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 1 * 1000 * 1000 };
-        scaling_options _scale_3 = { 1920, 1080, 420, 240, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, 500 * 1000 };
+        scaling_options _scale_1 = {
+                1920, 1080,                             // source
+                1280, 720,                              // target
+                AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, // pixel formats of source and target
+                2 * 1000 * 1000 - AUDIO_BITRATE,        // bitrate, 128000 - audio bitrate
+                60,                                     // GOP size
+                1                                       // max_b_frames
+        };
+        scaling_options _scale_2 = {
+                1920, 1080,
+                840, 480,
+                AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P,
+                1 * 1000 * 1000 - AUDIO_BITRATE,
+                60,
+                1
+        };
+        scaling_options _scale_3 = {
+                1920, 1080,
+                420, 240,
+                AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P,
+                500 * 1000 - AUDIO_BITRATE,
+                60,
+                1
+        };
 
         _hls_encoder->add_scaling_option( _scale_1 );
         _hls_encoder->add_scaling_option( _scale_2 );
